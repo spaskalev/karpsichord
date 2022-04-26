@@ -110,7 +110,7 @@ with {
 };
 
 process = midi_gate <: ((initial_samples : pick_position : (+ (_) : sample_delay  : string_filter : string_decay) ~ _)
-          * (en.arfe(0.2, 0.4, 0))) : * (hslider("Voices attenuation", 1, 0, 1, 0.001)) <: _, _;
+          * (en.arfe(0.2, 0.4, 0))) : * (hslider("Voices attenuation", 0.4, 0, 1, 0.001)) <: _, _;
 
 effect = hgroup("Effects: ", limiter_lad_N(2, .01, 1, .01, .1, 1) : dm.zita_rev_fdn(
     hslider("f1: crossover frequency (Hz) separating dc and midrange frequencies", 100, 1, 4000, 1),
