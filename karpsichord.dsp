@@ -114,7 +114,7 @@ process = midi_gate <: ((initial_samples : pick_position : (+ (_) : sample_delay
 
 effect = hgroup("Effects: ", limiter_lad_N(2, .01, 1, .01, .1, 1) : dm.zita_rev_fdn(
     hslider("f1: crossover frequency (Hz) separating dc and midrange frequencies", 100, 1, 4000, 1),
-    hslider("f2: frequency (Hz) above f1 where T60 = t60m/2 (see below)", 600, 1, 4000, 1),
-    hslider("t60dc: desired decay time (t60) at frequency 0 (sec)", 0.1, 0, 10, 0.1),
+    hslider("f2: frequency (Hz) above f1 where T60 = t60m/2 (see below)", 200, 1, 4000, 1),
+    hslider("t60dc: desired decay time (t60) at frequency 0 (sec)", 1, 0, 10, 0.1),
     hslider("t60m: desired decay time (t60) at midrange frequencies (sec)", 3.5, 0, 10, 0.1),
     48000));
