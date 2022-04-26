@@ -94,7 +94,7 @@ with {
 string_decay(i) = hgroup("Decay compensation = min(0,999, 1 - log(normalized midi frequency))",(i*k)
 with {
     k = min(0.999, 1 - ( normalized_midi_freq
-                 : * (hslider("Input multiplier", 6.5, -10, 10, 0.01))
+                 : * (hslider("Input multiplier", 20, 0.01, 20, 0.01))
                  : + (hslider("Input constant", 0.05, -1, 1, 0.001))
                  : log
                  : * (hslider("Output multiplier", -0.005, -1, 1, 0.001))
