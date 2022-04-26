@@ -44,32 +44,29 @@ min_midi_freq = ba.midikey2hz(0);
 normalized_midi_freq = (midi_freq - min_midi_freq) / (max_midi_freq - min_midi_freq);
 
 // Excitation noise source is white noise filtered by a two-element convolution filter
-noise_source = hgroup("Noise compensation = noise * ((normalized midi frequency * m) + c)", noise : fir((.5, .5)) : * (attenuation)
+noise_period = 48000;
+noise_source = rdtable(noise_period, (noise : fir((.5, .5)), ba.sweep(noise_period, midi_gate))) : * (attenuation)
 with {
     attenuation = (normalized_midi_freq * m) + c;
-    m = hslider("Multiplier", 1.25, -2, 2, 0.0001);
-    c = hslider("Constant", 0.35, -2, 2, 0.0001);
-});
+    m = 1.25;
+    c = 0.35;
+};
 
-noise_envelope(signal) = hgroup("Noise envelope/gain = (normalized midi frequency * m) + c", en.ar(attack, release, signal)
+noise_envelope(signal) = en.ar(attack, release, signal)
 with {
     total_length = (normalized_midi_freq * m) + c;
-    ratio = hslider("Attack/release ratio", 0.5, 0, 1, 0.1);
-    m = hslider("Multiplier", -0.185, -1, 1, 0.0001);
-    c = hslider("Constant", 0.045, -1, 1, 0.0001);
+    ratio = 0.5;
+    m = -0.185;
+    c = 0.045;
     attack = total_length * ratio;
     release = total_length * (1 - ratio);
-});
+};
 
 // Generate excitation on trigger signal using a fire-and-forget envelope
 initial_samples(signal) = (noise_source * noise_envelope(signal));
 
 // A line equation that modifies the sample delay and therefore the notes' pitch
-tuning_gradient = hgroup("Tuning gradient = (normalized midi frequency * m) + c", (m * normalized_midi_freq) + c
-with {
-    m = hslider("Multiplier",0.55,-2.0,2,0.01);
-    c = hslider("Constant",-1.2,-5,5,0.1);
-});
+tuning_gradient = (0.55 * normalized_midi_freq) - 1.2;
 
 // The sample delay length. Based on the current sampling rate, note and compensation.
 loop_delay = (ma.SR / midi_freq) + tuning_gradient;
@@ -78,43 +75,29 @@ loop_delay = (ma.SR / midi_freq) + tuning_gradient;
 sample_delay(signal) = fdelay5(4096, loop_delay, signal);
 
 // A stretched convolution filter that extends high notes' duration
-string_filter(i) = hgroup("Stretch compensation = exp(normalized midi frequency)", (c*i) + (d * (i'))
+string_filter(i) = (c*i) + (d * (i'))
 with {
     d = S * 0.5;
     c = 1 - d;
-    S = normalized_midi_freq
-        : * (hslider("Input multiplier", 2.35, -10, 10, 0.01))
-        : + (hslider("Input constant", -0.625, -10, 10, 0.01))
-        : exp
-        : * (hslider("Output multiplier", -0.1, -1, 1, 0.01))
-        : + (hslider("Output constant", 0.35, -1, 1, 0.01));
-});
-
-// A log-based attenuation that shortens low notes' duration
-string_decay(i) = hgroup("Decay compensation = min(0,999, 1 - log(normalized midi frequency))",(i*k)
-with {
-    k = min(0.999, 1 - ( normalized_midi_freq
-                 : * (hslider("Input multiplier", 20, 0.01, 20, 0.01))
-                 : + (hslider("Input constant", 0.05, -1, 1, 0.001))
-                 : log
-                 : * (hslider("Output multiplier", -0.005, -1, 1, 0.001))
-                 : + (hslider("Output constant", 0, -1, 1, 0.001))));
-});
-
-// Pick position comb filter based on the loop delay for the current note.
-pick_position(s) = select2(enabled, s, filter)
-with {
-    position = hslider("Pick position (relative) (set to zero to disable)", 0.15, 0, 0.5, 0.01);
-    enabled = (position != 0);
-    filter = delay(4096, position * loop_delay, s) : - (s);
+    S = normalized_midi_freq : * (2.35) : + (-0.625) : exp : * (-0.1) : + (0.35);
 };
 
-process = midi_gate <: ((initial_samples : pick_position : (+ (_) : sample_delay  : string_filter : string_decay) ~ _)
-          * (en.arfe(0.2, 0.4, 0))) : * (hslider("Voices attenuation", 0.4, 0, 1, 0.001)) <: _, _;
+// A log-based attenuation that shortens low notes' duration
+string_decay(i) = (i*k)
+with {
+    k = min(0.999, 1 - ( normalized_midi_freq : * (20) : + (0.05) : log : * (-0.005) : + (0)));
+};
 
-effect = hgroup("Effects: ", limiter_lad_N(2, .01, 1, .01, .1, 1) : dm.zita_rev_fdn(
-    hslider("f1: crossover frequency (Hz) separating dc and midrange frequencies", 100, 1, 4000, 1),
-    hslider("f2: frequency (Hz) above f1 where T60 = t60m/2 (see below)", 200, 1, 4000, 1),
-    hslider("t60dc: desired decay time (t60) at frequency 0 (sec)", 1, 0, 10, 0.1),
-    hslider("t60m: desired decay time (t60) at midrange frequencies (sec)", 3.5, 0, 10, 0.1),
-    48000));
+// Pick position comb filter based on the loop delay for the current note.
+pick_position(position, s) = delay(4096, position * loop_delay, s) : - (s);
+
+process = midi_gate <: ((initial_samples : pick_position(0.15) : (+ (_) : sample_delay  : string_filter : string_decay) ~ _)/2 +
+                        (initial_samples : pick_position(0.10) : (+ (_) : sample_delay  : string_filter : string_decay) ~ _)/2)
+          * (en.arfe(0.2, 0.4, 0)) <: _, _;
+
+effect = limiter_lad_N(2, .01, 1, .01, .1, 1) : dm.zita_rev_fdn(
+    100, // f1: crossover frequency (Hz) separating dc and midrange frequencies
+    200, // f2: frequency (Hz) above f1 where T60 = t60m/2 (see below)
+    1, // t60dc: desired decay time (t60) at frequency 0 (sec)
+    3.5, // t60m: desired decay time (t60) at midrange frequencies (sec)
+    48000); // max sampling rate
