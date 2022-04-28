@@ -48,8 +48,8 @@ noise_period = 48000;
 noise_source = rdtable(noise_period, (noise : fir((.5, .5)), ba.sweep(noise_period, midi_gate))) : * (attenuation)
 with {
     attenuation = (normalized_midi_freq * m) + c;
-    m = 1.25;
-    c = 0.35;
+    m = 1.15;
+    c = 0.45;
 };
 
 noise_envelope(signal) = en.ar(attack, release, signal)
@@ -57,7 +57,7 @@ with {
     total_length = (normalized_midi_freq * m) + c;
     ratio = 0.5;
     m = -0.185;
-    c = 0.045;
+    c = 0.040;
     attack = total_length * ratio;
     release = total_length * (1 - ratio);
 };
@@ -93,9 +93,9 @@ pick_position(position, s) = delay(4096, position * loop_delay, s) : - (s);
 
 process = midi_gate <: ((initial_samples : pick_position(0.15) : (+ (_) : sample_delay  : string_filter : string_decay) ~ _)/2 +
                         (initial_samples : pick_position(0.10) : (+ (_) : sample_delay  : string_filter : string_decay) ~ _)/2)
-          * (en.arfe(0.2, 0.4, 0)) <: _, _;
+          * (en.are(0.2, 1)) <: _, _;
 
-effect = limiter_lad_N(2, .01, 1, .01, .1, 1) : dm.zita_rev_fdn(
+effect = low_shelf(4.5, 440) : peak_eq(-2, 600, 250) : high_shelf(-0.5, 880) :limiter_lad_N(2, .01, 1, .01, .1, 1) : dm.zita_rev_fdn(
     100, // f1: crossover frequency (Hz) separating dc and midrange frequencies
     200, // f2: frequency (Hz) above f1 where T60 = t60m/2 (see below)
     1, // t60dc: desired decay time (t60) at frequency 0 (sec)
