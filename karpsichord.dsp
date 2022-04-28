@@ -21,7 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 declare options "[midi:on]";
-declare options "[nvoices:16]";
+declare options "[nvoices:32]";
 
 import("basics.lib");
 import("filters.lib");
