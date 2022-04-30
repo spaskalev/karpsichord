@@ -93,7 +93,7 @@ pick_position(position, s) = delay(4096, position * loop_delay, s) : - (s);
 
 process = midi_gate <: ((initial_samples : pick_position(0.15) : (+ (_) : sample_delay  : string_filter : string_decay) ~ _)/2 +
                         (initial_samples : pick_position(0.10) : (+ (_) : sample_delay  : string_filter : string_decay) ~ _)/2)
-          * (en.are(0.1 + (0.05 * (1 - midi_gain)), 1)) <: _, _;
+          * (en.are(0.15 + (0.05 * (1 - midi_gain)), 1)) <: _, _;
 
 effect = limiter_lad_N(2, .01, 1, .01, .1, 1)
         : low_shelf(4.5, 330)
@@ -102,6 +102,6 @@ effect = limiter_lad_N(2, .01, 1, .01, .1, 1)
         : dm.zita_rev_fdn(
             100, // f1: crossover frequency (Hz) separating dc and midrange frequencies
             200, // f2: frequency (Hz) above f1 where T60 = t60m/2 (see below)
-            1, // t60dc: desired decay time (t60) at frequency 0 (sec)
+            1.5, // t60dc: desired decay time (t60) at frequency 0 (sec)
             3.5, // t60m: desired decay time (t60) at midrange frequencies (sec)
             48000); // max sampling rate
