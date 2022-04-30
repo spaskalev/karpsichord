@@ -93,7 +93,7 @@ pick_position(position, s) = delay(4096, position * loop_delay, s) : - (s);
 
 process = midi_gate <: ((initial_samples : pick_position(0.15) : (+ (_) : sample_delay  : string_filter : string_decay) ~ _)/2 +
                         (initial_samples : pick_position(0.10) : (+ (_) : sample_delay  : string_filter : string_decay) ~ _)/2)
-          * (en.are(0.15, 1)) <: _, _;
+          * (en.are(0.1 + (0.05 * (1 - midi_gain)), 1)) <: _, _;
 
 effect = limiter_lad_N(2, .01, 1, .01, .1, 1)
         : low_shelf(4.5, 330)
