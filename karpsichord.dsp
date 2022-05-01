@@ -97,11 +97,11 @@ process = midi_gate <: ((initial_samples : pick_position(0.15) : (+ (_) : sample
 
 effect = limiter_lad_N(2, .01, 1, .01, .1, 1)
         : low_shelf(4.5, 330)
-        : peak_eq(-3, 550, 350)
+        : peak_eq(-1, 550, 350)
         : high_shelf(1.5, 600)
         : dm.zita_rev_fdn(
-            100, // f1: crossover frequency (Hz) separating dc and midrange frequencies
-            200, // f2: frequency (Hz) above f1 where T60 = t60m/2 (see below)
+            220, // f1: crossover frequency (Hz) separating dc and midrange frequencies
+            440, // f2: frequency (Hz) above f1 where T60 = t60m/2 (see below)
             1.5, // t60dc: desired decay time (t60) at frequency 0 (sec)
             3.5, // t60m: desired decay time (t60) at midrange frequencies (sec)
             48000); // max sampling rate
