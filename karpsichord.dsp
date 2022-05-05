@@ -3,7 +3,7 @@
 This file is part of the karpsichord project
   at https://github.com/spaskalev/karpsichord
 
-Copyright (C) 2022 Stanislav Paskalev <spaskalev@protonmail.com
+Copyright (C) 2022 Stanislav Paskalev <spaskalev@protonmail.com>
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -34,13 +34,37 @@ import("reverbs.lib");
 
 // These UI elements are automatically set by Faust when using MIDI
 midi_gate = button("gate");
-midi_freq = hslider("freq",440,0,4096,1);
+input_midi_freq = hslider("freq",440,0,4096,1);
+tempered_midi_freq = input_midi_freq * cent2ratio(temperament);
 midi_gain = hslider("gain",0.5,0,1,0.01);
 
 // The value of the current MIDI note, normalized to [0,1]
 max_midi_freq = ba.midikey2hz(127);
 min_midi_freq = ba.midikey2hz(0);
-normalized_midi_freq = (midi_freq - min_midi_freq) / (max_midi_freq - min_midi_freq);
+
+// Convert a difference in cents https://en.wikipedia.org/wiki/Cent_(music) to multiplication ratio
+cent2ratio(cent) = pow(2.0, cent/1200);
+
+/* Tuning from http://www-personal.umich.edu/~bpl/larips/
+Enter the offsets from C, not A. The numbers to use are:
+C (0.0), C# (-2.0), D (-3.9), Eb (-2.0), E (-7.8), F (2.0), F# (-3.9), G (-2.0), G# (-2.0), A (-5.9), Bb (-2.0), B (-5.9).
+*/
+temperament = rdtable(waveform{
+    0, -2.0, -3.9, -2.0, -7.8, 2.0, -3.9, -2.0, -2.0, -5.9, -2.0, -5.9,
+    0, -2.0, -3.9, -2.0, -7.8, 2.0, -3.9, -2.0, -2.0, -5.9, -2.0, -5.9,
+    0, -2.0, -3.9, -2.0, -7.8, 2.0, -3.9, -2.0, -2.0, -5.9, -2.0, -5.9,
+    0, -2.0, -3.9, -2.0, -7.8, 2.0, -3.9, -2.0, -2.0, -5.9, -2.0, -5.9,
+    0, -2.0, -3.9, -2.0, -7.8, 2.0, -3.9, -2.0, -2.0, -5.9, -2.0, -5.9,
+    0, -2.0, -3.9, -2.0, -7.8, 2.0, -3.9, -2.0, -2.0, -5.9, -2.0, -5.9,
+    0, -2.0, -3.9, -2.0, -7.8, 2.0, -3.9, -2.0, -2.0, -5.9, -2.0, -5.9,
+    0, -2.0, -3.9, -2.0, -7.8, 2.0, -3.9, -2.0, -2.0, -5.9, -2.0, -5.9,
+    0, -2.0, -3.9, -2.0, -7.8, 2.0, -3.9, -2.0, -2.0, -5.9, -2.0, -5.9,
+    0, -2.0, -3.9, -2.0, -7.8, 2.0, -3.9, -2.0, -2.0, -5.9, -2.0, -5.9,
+    0, -2.0, -3.9, -2.0, -7.8, 2.0, -3.9, -2.0, -2.0, -5.9, -2.0, -5.9,
+    0, -2.0, -3.9, -2.0, -7.8, 2.0, -3.9, -2.0, -2.0, -5.9, -2.0, -5.9
+    }, int(ba.hz2midikey(input_midi_freq)));
+
+normalized_midi_freq = ((tempered_midi_freq) - min_midi_freq) / (max_midi_freq - min_midi_freq);
 
 // Excitation noise source is white noise filtered by a two-element convolution filter
 noise_period = 48000;
@@ -68,7 +92,7 @@ initial_samples(signal) = (noise_source * noise_envelope(signal));
 tuning_gradient = (0.55 * normalized_midi_freq) - 1.2;
 
 // The sample delay length. Based on the current sampling rate, note and compensation.
-loop_delay = (ma.SR / midi_freq) + tuning_gradient;
+loop_delay = (ma.SR / tempered_midi_freq) + tuning_gradient;
 
 // Sample delay via fifth-order Lagrange interpolation. Might be an overkill.
 sample_delay(signal) = fdelay5(4096, loop_delay, signal);
