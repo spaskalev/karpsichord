@@ -50,19 +50,8 @@ Enter the offsets from C, not A. The numbers to use are:
 C (0.0), C# (-2.0), D (-3.9), Eb (-2.0), E (-7.8), F (2.0), F# (-3.9), G (-2.0), G# (-2.0), A (-5.9), Bb (-2.0), B (-5.9).
 */
 temperament = rdtable(waveform{
-    0, -2.0, -3.9, -2.0, -7.8, 2.0, -3.9, -2.0, -2.0, -5.9, -2.0, -5.9,
-    0, -2.0, -3.9, -2.0, -7.8, 2.0, -3.9, -2.0, -2.0, -5.9, -2.0, -5.9,
-    0, -2.0, -3.9, -2.0, -7.8, 2.0, -3.9, -2.0, -2.0, -5.9, -2.0, -5.9,
-    0, -2.0, -3.9, -2.0, -7.8, 2.0, -3.9, -2.0, -2.0, -5.9, -2.0, -5.9,
-    0, -2.0, -3.9, -2.0, -7.8, 2.0, -3.9, -2.0, -2.0, -5.9, -2.0, -5.9,
-    0, -2.0, -3.9, -2.0, -7.8, 2.0, -3.9, -2.0, -2.0, -5.9, -2.0, -5.9,
-    0, -2.0, -3.9, -2.0, -7.8, 2.0, -3.9, -2.0, -2.0, -5.9, -2.0, -5.9,
-    0, -2.0, -3.9, -2.0, -7.8, 2.0, -3.9, -2.0, -2.0, -5.9, -2.0, -5.9,
-    0, -2.0, -3.9, -2.0, -7.8, 2.0, -3.9, -2.0, -2.0, -5.9, -2.0, -5.9,
-    0, -2.0, -3.9, -2.0, -7.8, 2.0, -3.9, -2.0, -2.0, -5.9, -2.0, -5.9,
-    0, -2.0, -3.9, -2.0, -7.8, 2.0, -3.9, -2.0, -2.0, -5.9, -2.0, -5.9,
     0, -2.0, -3.9, -2.0, -7.8, 2.0, -3.9, -2.0, -2.0, -5.9, -2.0, -5.9
-    }, int(ba.hz2midikey(input_midi_freq)));
+    }, int(ba.hz2midikey(input_midi_freq) % 12));
 
 normalized_midi_freq = ((tempered_midi_freq) - min_midi_freq) / (max_midi_freq - min_midi_freq);
 
@@ -78,9 +67,9 @@ with {
 noise_envelope(signal) = en.ar(attack, release, signal)
 with {
     total_length = (normalized_midi_freq * m) + c;
-    ratio = 0.5;
+    ratio = 0.65;
     m = -0.185;
-    c = 0.040;
+    c = 0.03;
     attack = total_length * ratio;
     release = total_length * (1 - ratio);
 };
@@ -116,11 +105,14 @@ pick_position(position, s) = delay(4096, position * loop_delay, s) : - (s);
 
 process = midi_gate <: ((initial_samples : pick_position(0.15) : (+ (_) : sample_delay  : string_filter : string_decay) ~ _)/2 +
                         (initial_samples : pick_position(0.10) : (+ (_) : sample_delay  : string_filter : string_decay) ~ _)/2)
-          * (en.are(0.15 + (0.05 * (1 - midi_gain)), 1)) <: _, _;
+          * (en.are(0.20 + (0.05 * (1 - midi_gain)), 1)) <: _, _;
 
-effect = limiter_lad_N(2, .01, 1, .01, .1, 1)
-        : low_shelf(4.5, 330)
-        : peak_eq(-1, 550, 350)
+n = 6;
+stereo = delay(128, n/2), delay(128, ba.sweep(n+1, 0));
+
+effect = stereo : limiter_lad_N(2, .01, 0.99, .01, .1, 1)
+        : low_shelf(4.5, 215)
+        : peak_eq(-2.0, 550, 375)
         : high_shelf(1.5, 600)
         : dm.zita_rev_fdn(
             220, // f1: crossover frequency (Hz) separating dc and midrange frequencies
