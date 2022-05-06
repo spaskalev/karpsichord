@@ -34,7 +34,7 @@ import("reverbs.lib");
 
 // These UI elements are automatically set by Faust when using MIDI
 midi_gate = button("gate");
-input_midi_freq = hslider("freq",440,0,4096,1);
+input_midi_freq = hslider("freq",440,8,22000,1);
 tempered_midi_freq = input_midi_freq * cent2ratio(temperament);
 midi_gain = hslider("gain",0.5,0,1,0.01);
 
@@ -115,8 +115,8 @@ effect = stereo : limiter_lad_N(2, .01, 0.99, .01, .1, 1)
         : peak_eq(-2.0, 550, 375)
         : high_shelf(1.5, 600)
         : dm.zita_rev_fdn(
-            220, // f1: crossover frequency (Hz) separating dc and midrange frequencies
+            110, // f1: crossover frequency (Hz) separating dc and midrange frequencies
             440, // f2: frequency (Hz) above f1 where T60 = t60m/2 (see below)
-            1.5, // t60dc: desired decay time (t60) at frequency 0 (sec)
-            3.5, // t60m: desired decay time (t60) at midrange frequencies (sec)
+            1.85, // t60dc: desired decay time (t60) at frequency 0 (sec)
+            3.15, // t60m: desired decay time (t60) at midrange frequencies (sec)
             48000); // max sampling rate
