@@ -51,25 +51,23 @@ C (0.0), C# (-2.0), D (-3.9), Eb (-2.0), E (-7.8), F (2.0), F# (-3.9), G (-2.0),
 */
 temperament = rdtable(waveform{
     0, -2.0, -3.9, -2.0, -7.8, 2.0, -3.9, -2.0, -2.0, -5.9, -2.0, -5.9
-    }, int(ba.hz2midikey(input_midi_freq) % 12));
+    }, int(ba.hz2midikey(input_midi_freq)) % 12);
 
 normalized_midi_freq = ((tempered_midi_freq) - min_midi_freq) / (max_midi_freq - min_midi_freq);
 
 // Excitation noise source is white noise filtered by a two-element convolution filter
 noise_period = 48000;
-noise_source = rdtable(noise_period, (noise : fir((.5, .5)), ba.sweep(noise_period, midi_gate))) : * (attenuation)
+noise_source = rdtable(noise_period, (select2(noise >= 0, 1, -1), ba.sweep(noise_period, midi_gate))) : * (attenuation)
 with {
     attenuation = (normalized_midi_freq * m) + c;
     m = 1.15;
-    c = 0.45;
+    c = 0.15;
 };
 
 noise_envelope(signal) = en.ar(attack, release, signal)
 with {
-    total_length = (normalized_midi_freq * m) + c;
+    total_length = normalized_midi_freq : log : * (-0.005);
     ratio = 0.65;
-    m = -0.185;
-    c = 0.03;
     attack = total_length * ratio;
     release = total_length * (1 - ratio);
 };
@@ -89,9 +87,8 @@ sample_delay(signal) = fdelay5(4096, loop_delay, signal);
 // A stretched convolution filter that extends high notes' duration
 string_filter(i) = (c*i) + (d * (i'))
 with {
-    d = S * 0.5;
+    d = 0.125;
     c = 1 - d;
-    S = normalized_midi_freq : * (2.35) : + (-0.625) : exp : * (-0.1) : + (0.35);
 };
 
 // A log-based attenuation that shortens low notes' duration
