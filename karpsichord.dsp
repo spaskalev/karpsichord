@@ -55,7 +55,7 @@ temperament = rdtable(waveform{
 
 normalized_midi_freq = ((tempered_midi_freq) - min_midi_freq) / (max_midi_freq - min_midi_freq);
 
-// Excitation noise source is white noise filtered by a two-element convolution filter
+// Excitation noise source is binary noise at maximum amplitude
 noise_period = 48000;
 noise_source = rdtable(noise_period, (select2(noise >= 0, 1, -1), ba.sweep(noise_period, midi_gate))) : * (attenuation)
 with {
@@ -66,8 +66,8 @@ with {
 
 noise_envelope(signal) = en.ar(attack, release, signal)
 with {
-    total_length = normalized_midi_freq : log : * (-0.005);
-    ratio = 0.65;
+    total_length = normalized_midi_freq : * (0.40) : log : * (-0.005) : + (-0.0090);
+    ratio = 0.85;
     attack = total_length * ratio;
     release = total_length * (1 - ratio);
 };
@@ -107,13 +107,11 @@ process = midi_gate <: ((initial_samples : pick_position(0.15) : (+ (_) : sample
 n = 6;
 stereo = delay(128, n/2), delay(128, ba.sweep(n+1, 0));
 
-effect = stereo : limiter_lad_N(2, .01, 0.99, .01, .1, 1)
-        : low_shelf(4.5, 215)
-        : peak_eq(-2.0, 550, 375)
-        : high_shelf(1.5, 600)
-        : dm.zita_rev_fdn(
-            220, // f1: crossover frequency (Hz) separating dc and midrange frequencies
-            440, // f2: frequency (Hz) above f1 where T60 = t60m/2 (see below)
-            1.5, // t60dc: desired decay time (t60) at frequency 0 (sec)
-            3.5, // t60m: desired decay time (t60) at midrange frequencies (sec)
-            48000); // max sampling rate
+effect = _
+        : limiter_lad_N(2, .01, 0.99, .01, .1, 1)
+        : low_shelf(1.0, 215)
+        : peak_eq(-1.5, 440, 440)
+        : high_shelf(-1.0, 600)
+        : dm.mono_freeverb(0.95, 0.75, 0.9)
+        : stereo
+        ;
