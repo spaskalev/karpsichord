@@ -45,12 +45,9 @@ min_midi_freq = ba.midikey2hz(0);
 // Convert a difference in cents https://en.wikipedia.org/wiki/Cent_(music) to multiplication ratio
 cent2ratio(cent) = pow(2.0, cent/1200);
 
-/* Tuning from http://www-personal.umich.edu/~bpl/larips/
-Enter the offsets from C, not A. The numbers to use are:
-C (0.0), C# (-2.0), D (-3.9), Eb (-2.0), E (-7.8), F (2.0), F# (-3.9), G (-2.0), G# (-2.0), A (-5.9), Bb (-2.0), B (-5.9).
-*/
 temperament = rdtable(waveform{
-    0, -2.0, -3.9, -2.0, -7.8, 2.0, -3.9, -2.0, -2.0, -5.9, -2.0, -5.9
+    // 0, -2.0, -3.9, -2.0, -7.8, 2.0, -3.9, -2.0, -2.0, -5.9, -2.0, -5.9 // Tuning from http://www-personal.umich.edu/~bpl/larips/
+    5.2, -0.6, 2.1, 2.5, -0.6, 5.8, -0.8, 3.7, 1.0, 0.0, 4.1, -0.8 // Optimal well temperament according to http://persianney.com/misc/wtemp.pdf
     }, int(ba.hz2midikey(input_midi_freq)) % 12);
 
 normalized_midi_freq = ((tempered_midi_freq) - min_midi_freq) / (max_midi_freq - min_midi_freq);
@@ -66,7 +63,7 @@ with {
 
 noise_envelope(signal) = en.ar(attack, release, signal)
 with {
-    total_length = normalized_midi_freq : * (0.40) : log : * (-0.005) : + (-0.0090);
+    total_length = normalized_midi_freq : * (0.35) : log : * (-0.005) : + (-0.001);
     ratio = 0.85;
     attack = total_length * ratio;
     release = total_length * (1 - ratio);
