@@ -63,7 +63,7 @@ with {
 
 noise_envelope(signal) = en.ar(attack, release, signal)
 with {
-    total_length = normalized_midi_freq : * (0.35) : log : * (-0.005) : + (-0.001);
+    total_length = normalized_midi_freq : * (0.35) : log : * (-0.005) : + (-0.008);
     ratio = 0.85;
     attack = total_length * ratio;
     release = total_length * (1 - ratio);
@@ -84,8 +84,9 @@ sample_delay(signal) = fdelay5(4096, loop_delay, signal);
 // A stretched convolution filter that extends high notes' duration
 string_filter(i) = (c*i) + (d * (i'))
 with {
-    d = 0.125;
+    d = S * 0.5;
     c = 1 - d;
+    S = normalized_midi_freq : * (2.35) : + (-0.625) : exp : * (-0.1) : + (0.35);
 };
 
 // A log-based attenuation that shortens low notes' duration
@@ -99,16 +100,12 @@ pick_position(position, s) = delay(4096, position * loop_delay, s) : - (s);
 
 process = midi_gate <: ((initial_samples : pick_position(0.15) : (+ (_) : sample_delay  : string_filter : string_decay) ~ _)/2 +
                         (initial_samples : pick_position(0.10) : (+ (_) : sample_delay  : string_filter : string_decay) ~ _)/2)
-          * (en.are(0.20 + (0.05 * (1 - midi_gain)), 1)) <: _, _;
-
-n = 6;
-stereo = delay(128, n/2), delay(128, ba.sweep(n+1, 0));
+          * (en.are(0.20 + (0.20 * (1 - midi_gain)), 1)) <: _, _;
 
 effect = _
-        : limiter_lad_N(2, .01, 0.99, .01, .1, 1)
+        : limiter_lad_N(2, .01, 0.95, .015, .5, 1)
         : low_shelf(1.0, 215)
         : peak_eq(-1.5, 440, 440)
         : high_shelf(-1.0, 600)
-        : dm.mono_freeverb(0.95, 0.75, 0.9)
-        : stereo
+        : dm.stereo_freeverb(0.95, 0.75, 1, 23)
         ;
