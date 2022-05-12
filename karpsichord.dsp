@@ -47,7 +47,8 @@ cent2ratio(cent) = pow(2.0, cent/1200);
 
 temperament = rdtable(waveform{
     // 0, -2.0, -3.9, -2.0, -7.8, 2.0, -3.9, -2.0, -2.0, -5.9, -2.0, -5.9 // Tuning from http://www-personal.umich.edu/~bpl/larips/
-    5.2, -0.6, 2.1, 2.5, -0.6, 5.8, -0.8, 3.7, 1.0, 0.0, 4.1, -0.8 // Optimal well temperament according to http://persianney.com/misc/wtemp.pdf
+    // 5.2, -0.6, 2.1, 2.5, -0.6, 5.8, -0.8, 3.7, 1.0, 0.0, 4.1, -0.8 // Optimal well temperament according to http://persianney.com/misc/wtemp.pdf
+    +11.730, +1.955, +3.910, +5.865, +1.955, +9.775, 0.0, +7.820, +3.910, 0.0, +7.820, +3.910 // Werckmeister III
     }, int(ba.hz2midikey(input_midi_freq)) % 12);
 
 normalized_midi_freq = ((tempered_midi_freq) - min_midi_freq) / (max_midi_freq - min_midi_freq);
@@ -100,12 +101,12 @@ pick_position(position, s) = delay(4096, position * loop_delay, s) : - (s);
 
 process = midi_gate <: ((initial_samples : pick_position(0.15) : (+ (_) : sample_delay  : string_filter : string_decay) ~ _)/2 +
                         (initial_samples : pick_position(0.10) : (+ (_) : sample_delay  : string_filter : string_decay) ~ _)/2)
-          * (en.are(0.20 + (0.20 * (1 - midi_gain)), 1)) <: _, _;
+          * (en.are(0.20 + (0.20 * (1 - midi_gain)), 0.85)) <: _, _;
 
 effect = _
         : limiter_lad_N(2, .01, 0.95, .015, .5, 1)
-        : low_shelf(1.0, 215)
-        : peak_eq(-1.5, 440, 440)
-        : high_shelf(-1.0, 600)
+        : low_shelf(1.5, 215)
+        : peak_eq(-2.5, 440, 440)
+        : high_shelf(-2.0, 600)
         : dm.stereo_freeverb(0.95, 0.75, 1, 23)
         ;
