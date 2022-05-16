@@ -55,7 +55,8 @@ normalized_midi_freq = ((tempered_midi_freq) - min_midi_freq) / (max_midi_freq -
 
 // Excitation noise source is binary noise at maximum amplitude
 noise_period = 48000;
-noise_source = rdtable(noise_period, (select2(noise >= 0, 1, -1), ba.sweep(noise_period, midi_gate))) : * (attenuation)
+noise2 = noise_env(44434).noise;
+noise_source = rdtable(noise_period, (noise2, ba.sweep(noise_period, midi_gate))) : * (attenuation)
 with {
     attenuation = (normalized_midi_freq * m) + c;
     m = 1.15;
@@ -80,7 +81,7 @@ tuning_gradient = (0.55 * normalized_midi_freq) - 1.2;
 loop_delay = (ma.SR / tempered_midi_freq) + tuning_gradient;
 
 // Sample delay via fifth-order Lagrange interpolation. Might be an overkill.
-sample_delay(signal) = fdelay5(4096, loop_delay, signal);
+sample_delay(signal) = fdelay4a(4096, loop_delay, signal);
 
 // A stretched convolution filter that extends high notes' duration
 string_filter(i) = (c*i) + (d * (i'))
