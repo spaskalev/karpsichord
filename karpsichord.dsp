@@ -42,9 +42,6 @@ midi_gain = hslider("gain",0.5,0,1,0.01);
 max_midi_freq = ba.midikey2hz(127);
 min_midi_freq = ba.midikey2hz(0);
 
-// Convert a difference in cents https://en.wikipedia.org/wiki/Cent_(music) to multiplication ratio
-cent2ratio(cent) = pow(2.0, cent/1200);
-
 temperament = rdtable(waveform{
     // 0, -2.0, -3.9, -2.0, -7.8, 2.0, -3.9, -2.0, -2.0, -5.9, -2.0, -5.9 // Tuning from http://www-personal.umich.edu/~bpl/larips/
     // 5.2, -0.6, 2.1, 2.5, -0.6, 5.8, -0.8, 3.7, 1.0, 0.0, 4.1, -0.8 // Optimal well temperament according to http://persianney.com/misc/wtemp.pdf
