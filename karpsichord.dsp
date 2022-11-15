@@ -34,7 +34,7 @@ import("reverbs.lib");
 
 // These UI elements are automatically set by Faust when using MIDI
 midi_gate = button("gate");
-input_midi_freq = hslider("freq",440,0,4096,1);
+input_midi_freq = hslider("freq",440,10,4096,1);
 tempered_midi_freq = input_midi_freq * cent2ratio(temperament);
 midi_gain = hslider("gain",0.5,0,1,0.01);
 
